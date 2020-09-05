@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const multer = require("multer");
 const User = require("../models/user");
 const auth = require("../middleware/auth");
 
@@ -32,7 +33,9 @@ router.post("/login", async (req, res) => {
 // User logout
 router.post("/logout", auth, async (req, res) => {
   try {
-    req.user.tokens = req.user.tokens.filter(token => token.token !== req.token);
+    req.user.tokens = req.user.tokens.filter(
+      (token) => token.token !== req.token
+    );
     await req.user.save();
 
     res.send();
@@ -40,7 +43,6 @@ router.post("/logout", auth, async (req, res) => {
     res.status(500).send();
   }
 });
-
 
 // User logout all
 router.post("/logoutAll", auth, async (req, res) => {
@@ -64,7 +66,6 @@ router.post("/logoutAll", auth, async (req, res) => {
 //   }
 // });
 
-
 // Get Logged in User
 router.get("/me", auth, async (req, res) => {
   res.json(req.user);
@@ -84,6 +85,14 @@ router.get("/me", auth, async (req, res) => {
 //     res.status(500).send();
 //   }
 // });
+
+// Upload image
+const upload = multer({
+  dest: "avatars/",
+});
+router.post("/me/avatar", upload.single("avatar"), (req, res) => {
+  res.send();
+});
 
 // Update User
 router.patch("/me", auth, async (req, res) => {
