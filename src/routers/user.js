@@ -88,9 +88,51 @@ router.get("/me", auth, async (req, res) => {
 
 // Upload image
 const upload = multer({
-  dest: "avatars/",
+  limits: {
+    fileSize: 1000000,
+  },
+  fileFilter(req, file, cb) {
+    if (!file.originalname.match(/\.(png|jpeg|jpg)$/)) {
+      cb(new Error("Please upload an image"));
+    }
+
+    cb(undefined, true);
+  },
 });
-router.post("/me/avatar", upload.single("avatar"), (req, res) => {
+router.post(
+  "/me/avatar",
+  auth,
+  upload.single("avatar"),
+  async (req, res) => {
+    req.user.avatar = req.file.buffer;
+    await req.user.save();
+    res.send();
+  },
+  (error, req, res, next) => {
+    res.status(400).send({ error: error.message });
+  }
+);
+
+// Get avatar
+router.get("/:id/avatar", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user || !user.avatar) {
+      throw new Error();
+    }
+
+    res.set("Content-Type", "image/jpg");
+    res.send(user.avatar);
+  } catch (e) {
+    res.status(404).send();
+  }
+});
+
+// Delete avatar
+router.delete("/me/avatar", auth, async (req, res) => {
+  req.user.avatar = undefined;
+  await req.user.save();
   res.send();
 });
 
